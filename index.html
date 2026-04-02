@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evanz.dev | Roblox Developer</title>
+  <meta name="description" content="Portfolio website for Evanz_z, a Roblox developer focused on Lua scripting, progression systems, and replayable gameplay." />
+  <style>
+    :root{
+      --bg:#07111f;
+      --bg2:#0b1629;
+      --panel:rgba(10,20,38,.78);
+      --panel-2:rgba(16,29,53,.9);
+      --text:#f3f7ff;
+      --muted:#aebbd3;
+      --line:rgba(255,255,255,.10);
+      --accent:#8cc8ff;
+      --accent-2:#6ea8ff;
+      --soft:#dbeafe;
+      --shadow:0 18px 60px rgba(0,0,0,.35);
+      --radius:26px;
+      --max:1180px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(140,200,255,.16), transparent 24%),
+        radial-gradient(circle at 85% 0%, rgba(110,168,255,.14), transparent 22%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+      line-height:1.6;
+    }
+
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+
+    .container{max-width:var(--max);margin:0 auto;padding:0 22px}
+
+    .nav-wrap{
+      position:sticky; top:0; z-index:40;
+      backdrop-filter:blur(14px);
+      background:rgba(7,17,31,.62);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+
+    .nav{
+      min-height:74px;
+      display:flex; align-items:center; justify-content:space-between; gap:20px;
+    }
+
+    .brand{
+      display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.2px;
+    }
+
+    .logo-dot{
+      width:12px; height:12px; border-radius:50%;
+      background:linear-gradient(180deg, var(--accent), var(--accent-2));
+      box-shadow:0 0 28px rgba(140,200,255,.55);
+    }
+
+    .nav-links{
+      display:flex; flex-wrap:wrap; gap:18px; align-items:center;
+    }
+
+    .nav-links a{
+      color:var(--muted);
+      font-size:.95rem;
+      transition:.2s ease;
+    }
+
+    .nav-links a:hover{color:var(--text)}
+
+    .hero{padding:72px 0 34px}
+    .hero-grid{
+      display:grid;
+      grid-template-columns:1.2fr .8fr;
+      gap:24px;
+      align-items:stretch;
+    }
+
+    .card{
+      background:linear-gradient(180deg, var(--panel), rgba(8,16,30,.92));
+      border:1px solid var(--line);
+      border-radius:32px;
+      box-shadow:var(--shadow);
+    }
+
+    .hero-main{
+      position:relative;
+      overflow:hidden;
+      padding:42px;
+    }
+
+    .hero-main:before{
+      content:"";
+      position:absolute;
+      width:280px; height:280px; right:-90px; top:-60px;
+      background:radial-gradient(circle, rgba(140,200,255,.22), transparent 68%);
+      pointer-events:none;
+    }
+
+    .eyebrow{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:9px 14px;
+      border-radius:999px;
+      border:1px solid rgba(140,200,255,.22);
+      background:rgba(140,200,255,.08);
+      color:#d8ebff;
+      font-size:.92rem;
+      margin-bottom:18px;
+    }
+
+    h1{
+      margin:0 0 14px;
+      font-size:3.7rem;
+      line-height:.98;
+      letter-spacing:-1.7px;
+      max-width:760px;
+    }
+
+    .lead{
+      margin:0 0 26px;
+      max-width:760px;
+      color:var(--muted);
+      font-size:1.08rem;
+    }
+
+    .cta-row{
+      display:flex; flex-wrap:wrap; gap:12px;
+      margin-bottom:26px;
+    }
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      border-radius:15px;
+      padding:13px 18px;
+      border:1px solid var(--line);
+      font-weight:650;
+      transition:.2s ease;
+    }
+
+    .btn:hover{transform:translateY(-1px)}
+    .btn.primary{
+      background:linear-gradient(180deg, var(--accent), var(--accent-2));
+      border-color:transparent;
+      color:#06111f;
+    }
+    .btn.secondary{
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+    }
+
+    .mini-stats{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+    }
+
+    .mini-stat{
+      padding:16px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+    }
+
+    .mini-stat strong{
+      display:block;
+      font-size:1.2rem;
+      margin-bottom:4px;
+    }
+
+    .mini-stat span{
+      color:var(--muted);
+      font-size:.93rem;
+    }
+
+    .hero-side{
+      padding:22px;
+      display:grid;
+      gap:16px;
+      align-content:start;
+    }
+
+    .showcase{
+      padding:22px;
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,.07);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      min-height:210px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+
+    .showcase h3{margin:0 0 8px;font-size:1.1rem}
+    .showcase p{margin:0;color:var(--muted)}
+    .mock-window{
+      margin-top:18px;
+      border-radius:18px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+      background:#08111e;
+    }
+    .mock-bar{
+      height:36px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:0 12px;
+      background:#0d182b;
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .mock-bar span{
+      width:10px;height:10px;border-radius:50%;
+      background:rgba(255,255,255,.18);
+    }
+    .mock-content{
+      padding:18px;
+      display:grid;
+      gap:12px;
+    }
+    .mock-card{
+      height:54px;
+      border-radius:14px;
+      background:linear-gradient(180deg, rgba(140,200,255,.14), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.07);
+    }
+
+    section{padding:14px 0}
+    .section-card{padding:30px}
+    .section-head{
+      display:flex; justify-content:space-between; gap:20px; align-items:end; flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .section-head h2{
+      margin:0;
+      font-size:2rem;
+      letter-spacing:-.8px;
+    }
+    .section-head p{
+      margin:0;
+      color:var(--muted);
+      max-width:760px;
+    }
+
+    .about-grid{
+      display:grid;
+      grid-template-columns:1.05fr .95fr;
+      gap:18px;
+    }
+
+    .about-panel, .skill-card, .project-panel, .contact-box{
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.018));
+    }
+
+    .about-panel{padding:22px}
+    .about-panel p{margin:0;color:var(--muted)}
+    .quote{
+      font-size:1.04rem;
+      color:#dce9ff;
+    }
+
+    .skills-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:16px;
+    }
+
+    .skill-card{padding:22px}
+    .skill-card h3{margin:0 0 8px;font-size:1.05rem}
+    .skill-card p{margin:0;color:var(--muted)}
+
+    .projects-grid{
+      display:grid;
+      gap:18px;
+    }
+
+    .project-card{
+      padding:24px;
+      border-radius:26px;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
+      display:grid;
+      grid-template-columns:1.05fr .95fr;
+      gap:18px;
+      align-items:stretch;
+    }
+
+    .tag{
+      display:inline-block;
+      padding:7px 11px;
+      border-radius:999px;
+      font-size:.84rem;
+      color:#d9ecff;
+      border:1px solid rgba(140,200,255,.23);
+      background:rgba(140,200,255,.08);
+      margin-bottom:12px;
+    }
+
+    .project-copy h3{
+      margin:0 0 8px;
+      font-size:1.4rem;
+    }
+
+    .project-copy p{margin:0 0 14px;color:var(--muted)}
+    .project-copy ul{
+      margin:0; padding-left:18px; color:var(--muted)
+    }
+    .project-copy li + li{margin-top:6px}
+
+    .project-side{
+      display:grid;
+      gap:14px;
+      align-content:start;
+    }
+
+    .project-panel{
+      padding:18px;
+    }
+
+    .project-panel h4{
+      margin:0 0 10px;
+      font-size:1rem;
+    }
+
+    .project-link{
+      display:inline-flex;
+      margin-bottom:14px;
+      color:var(--soft);
+      font-weight:650;
+    }
+
+    .pill-row{
+      display:flex; flex-wrap:wrap; gap:8px;
+    }
+    .pill{
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:.88rem;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+      color:#d6e5fb;
+    }
+
+    .project-visual{
+      min-height:145px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.06);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(140,200,255,.16), transparent 26%),
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      display:grid;
+      place-items:center;
+      color:#dbeafe;
+      font-weight:700;
+      letter-spacing:.3px;
+    }
+
+    .contact-card{
+      padding:34px;
+      text-align:center;
+    }
+
+    .contact-card p{
+      max-width:720px;
+      margin:0 auto 18px;
+      color:var(--muted);
+    }
+
+    .contact-row{
+      display:flex; flex-wrap:wrap; justify-content:center; gap:12px;
+      margin-top:18px;
+    }
+
+    .contact-chip{
+      padding:13px 17px;
+      border-radius:15px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      font-weight:600;
+    }
+
+    footer{
+      padding:8px 22px 34px;
+      text-align:center;
+      color:#8ea2c0;
+      font-size:.92rem;
+    }
+
+    @media (max-width: 980px){
+      .hero-grid,
+      .about-grid,
+      .project-card,
+      .skills-grid{
+        grid-template-columns:1fr;
+      }
+      h1{font-size:2.8rem}
+      .mini-stats{grid-template-columns:1fr}
+    }
+
+    @media (max-width: 620px){
+      .container{padding:0 16px}
+      .hero{padding:48px 0 24px}
+      .hero-main,.hero-side,.section-card,.contact-card{padding:22px}
+      .card,.project-card{border-radius:24px}
+      h1{font-size:2.2rem}
+      .nav{min-height:66px}
+    }
+  </style>
+</head>
+<body>
+  <div class="nav-wrap">
+    <div class="container nav">
+      <div class="brand"><span class="logo-dot"></span> Evanz.dev</div>
+      <div class="nav-links">
+        <a href="#about">About</a>
+        <a href="#skills">Skills</a>
+        <a href="#projects">Projects</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="hero">
+    <div class="container hero-grid">
+      <div class="card hero-main">
+        <div class="eyebrow">Roblox Developer Portfolio</div>
+        <h1>Clean systems, replayable gameplay, and original Roblox development.</h1>
+        <p class="lead">
+          Hi, I’m Evanz_z. I’m a Roblox developer with 1-2 years of Lua experience, focused on progression systems, player engagement, and building games that are enjoyable to come back to. I do not use AI for my projects and take pride in creating my work myself.
+        </p>
+
+        <div class="cta-row">
+          <a class="btn primary" href="#projects">See projects</a>
+          <a class="btn secondary" href="https://www.roblox.com/users/2384011407/profile" target="_blank" rel="noopener noreferrer">Roblox profile</a>
+        </div>
+
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <strong>1-2 years</strong>
+            <span>Lua experience in Roblox Studio</span>
+          </div>
+          <div class="mini-stat">
+            <strong>Released games</strong>
+            <span>Projects built around progression and social systems</span>
+          </div>
+          <div class="mini-stat">
+            <strong>Independent work</strong>
+            <span>All systems and code created without AI</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card hero-side">
+        <div class="showcase">
+          <div>
+            <h3>Built to be looked at</h3>
+            <p>A cleaner portfolio layout inspired by modern portfolio builders and template-driven showcase sites.</p>
+          </div>
+          <div class="mock-window">
+            <div class="mock-bar"><span></span><span></span><span></span></div>
+            <div class="mock-content">
+              <div class="mock-card"></div>
+              <div class="mock-card"></div>
+              <div class="mock-card"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="showcase">
+          <div>
+            <h3>Best fit for sharing</h3>
+            <p>Made to work as a simple public-facing personal site for studios, collaborators, and commission enquiries.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="about">
+      <div class="container">
+        <div class="card section-card">
+          <div class="section-head">
+            <div>
+              <h2>About</h2>
+              <p>A short introduction that explains what I build and what kind of work I want to do.</p>
+            </div>
+          </div>
+
+          <div class="about-grid">
+            <div class="about-panel">
+              <p class="quote">I enjoy building game systems that feel rewarding, easy to understand, and strong enough to keep players engaged over time.</p>
+            </div>
+            <div class="about-panel">
+              <p>
+                My work focuses on progression, interaction, and replayability. I like creating mechanics that give players a reason to keep playing while keeping the core idea simple and enjoyable. I’m looking for chances to work with other developers, improve further, and contribute to strong Roblox projects.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="skills">
+      <div class="container">
+        <div class="card section-card">
+          <div class="section-head">
+            <div>
+              <h2>Skills</h2>
+              <p>The main areas I focus on when building a game in Roblox Studio.</p>
+            </div>
+          </div>
+
+          <div class="skills-grid">
+            <div class="skill-card">
+              <h3>Lua scripting</h3>
+              <p>Creating mechanics, gameplay logic, custom systems, and features that sit at the core of the experience.</p>
+            </div>
+            <div class="skill-card">
+              <h3>Progression design</h3>
+              <p>Building upgrade loops and systems that give players clear goals and satisfying growth.</p>
+            </div>
+            <div class="skill-card">
+              <h3>Player systems</h3>
+              <p>Working on social mechanics, monetisation-related systems, and gameplay that supports retention.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="projects">
+      <div class="container">
+        <div class="card section-card">
+          <div class="section-head">
+            <div>
+              <h2>Projects</h2>
+              <p>Examples of games I’ve made and the types of systems I enjoy building most.</p>
+            </div>
+          </div>
+
+          <div class="projects-grid">
+            <article class="project-card">
+              <div class="project-copy">
+                <div class="tag">Released project</div>
+                <h3>Button Frenzy</h3>
+                <p>
+                  A progression-focused game built around upgrades, scaling, and replayable gameplay loops. The goal is to keep the experience satisfying and rewarding as the player continues to progress.
+                </p>
+                <ul>
+                  <li>Progression-based systems</li>
+                  <li>Upgrade and scaling mechanics</li>
+                  <li>Designed for replayability and retention</li>
+                </ul>
+              </div>
+
+              <div class="project-side">
+                <div class="project-panel">
+                  <h4>Project link</h4>
+                  <a class="project-link" href="https://www.roblox.com/games/111654086218361/Button-Frenzy" target="_blank" rel="noopener noreferrer">Open Button Frenzy</a>
+                  <div class="pill-row">
+                    <span class="pill">Lua</span>
+                    <span class="pill">Progression</span>
+                    <span class="pill">Replayability</span>
+                  </div>
+                </div>
+                <div class="project-visual">Button Frenzy</div>
+              </div>
+            </article>
+
+            <article class="project-card">
+              <div class="project-copy">
+                <div class="tag">Released project</div>
+                <h3>Build For Donations</h3>
+                <p>
+                  A social building experience where players can create, interact, and engage with donation-driven mechanics. It combines creativity with player-focused systems.
+                </p>
+                <ul>
+                  <li>Building and interaction features</li>
+                  <li>Donation-based gameplay mechanics</li>
+                  <li>Strong social focus</li>
+                </ul>
+              </div>
+
+              <div class="project-side">
+                <div class="project-panel">
+                  <h4>Project link</h4>
+                  <a class="project-link" href="https://www.roblox.com/games/123249084929025/Build-For-Donations" target="_blank" rel="noopener noreferrer">Open Build For Donations</a>
+                  <div class="pill-row">
+                    <span class="pill">Building</span>
+                    <span class="pill">Social</span>
+                    <span class="pill">Monetisation</span>
+                  </div>
+                </div>
+                <div class="project-visual">Build For Donations</div>
+              </div>
+            </article>
+
+            <article class="project-card">
+              <div class="project-copy">
+                <div class="tag">In development</div>
+                <h3>Factory Game</h3>
+                <p>
+                  I’m currently working on a factory-style game focused on automation, progression, and long-term systems. The idea is to create a clean loop that rewards growth over time.
+                </p>
+                <ul>
+                  <li>Automation-focused mechanics</li>
+                  <li>Long-term progression systems</li>
+                  <li>System-heavy gameplay design</li>
+                </ul>
+              </div>
+
+              <div class="project-side">
+                <div class="project-panel">
+                  <h4>Current focus</h4>
+                  <p style="margin:0 0 14px;color:var(--muted)">Designing scalable mechanics that feel clear, rewarding, and enjoyable to build on.</p>
+                  <div class="pill-row">
+                    <span class="pill">Automation</span>
+                    <span class="pill">Factory</span>
+                    <span class="pill">Systems</span>
+                  </div>
+                </div>
+                <div class="project-visual">Factory Game</div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="container">
+        <div class="card contact-card">
+          <h2 style="margin:0 0 10px;font-size:2rem;letter-spacing:-.8px;">Contact</h2>
+          <p>
+            I’m interested in working with other developers, contributing to Roblox projects, and continuing to improve through real game development work.
+          </p>
+          <div class="contact-row">
+            <a class="contact-chip" href="https://www.roblox.com/users/2384011407/profile" target="_blank" rel="noopener noreferrer">Roblox: Evanz_z</a>
+            <div class="contact-chip">Discord: Reu_evo</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Evanz.dev portfolio concept
+  </footer>
+</body>
+</html>
