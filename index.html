@@ -710,6 +710,11 @@
             text-align: left;
         }
         .dl-row span { font-family: var(--font-pixel); font-size: 10px; color: var(--cream); line-height: 1.6; }
+        .dl-row span.dl-pending {
+            color: var(--muted);
+            opacity: 0.75;
+            white-space: nowrap;
+        }
 
         .spinner {
             display: inline-block;
@@ -1106,10 +1111,31 @@ const CURRENCY = '£';
 
 const PRODUCTS = [
     {
+        id: 'japanese-garden',
+        name: 'Japanese Garden Pack',
+        price: 4.99,
+        badge: 'NEW',
+        blurb: '16 low-poly garden pieces — torii gate, arched bridge, waterfall, pagoda, sakura and more.',
+        desc: 'A whole Japanese garden in one pack. Sixteen faceted low-poly pieces that drop straight into Studio and sit correctly against a character — the torii stands 18 studs tall, the stone lantern 8.6. Every mesh is under the 10,000-triangle limit, and the whole set is 11,286 triangles, so you can scatter it freely without hurting performance. Flat colours, no textures to upload.',
+        features: [
+            'Torii gate, arched bridge, 3-tier pagoda, hokora shrine',
+            'Waterfall with whitewater & mist, tsukubai basin',
+            'Sakura, maple, bamboo grove, grass, boulders',
+            'Scaled for Roblox (1 stud = 0.28m) — no resizing needed',
+            'FBX, 11,286 tris total, every part under the 10k limit'
+        ],
+        image: 'assets/japanese-garden.jpg',
+        // Download deliberately unwired: this repo is public, so shipping the
+        // file here would give the pack away for free. Point `file` at a
+        // Gumroad/Payhip download (or a paid host) once payments are attached.
+        file: null,
+        filename: null
+    },
+    {
         id: 'tiki-hut',
         name: 'Tiki Hut',
         price: 1.99,
-        badge: 'NEW',
+        badge: null,
         blurb: 'A stylised tiki bar — canopy roof, serving counter and three stools on a raised deck.',
         desc: 'A cozy little tiki hut, ready to drop into a beach, park or town square. Comes with the canopy roof, the support pillars, the serving counter, three stools and the raised base platform.',
         features: ['Canopy roof & support pillars', 'Serving counter', '3 matching stools', 'Raised deck base'],
@@ -1635,14 +1661,20 @@ payBtn.addEventListener('click', async () => {
         return showError(result.message);
     }
 
-    // paid — hand over the files
+    // paid — hand over the files. A product with no `file` has no download in
+    // this repo on purpose (see the catalogue note), so say so rather than
+    // rendering a link to `undefined`.
     const items = cartProducts();
-    document.getElementById('downloads').innerHTML = items.map(p => `
-        <div class="dl-row">
+    document.getElementById('downloads').innerHTML = items.map(p => p.file
+        ? `<div class="dl-row">
             <span>${p.name}</span>
             <a class="btn btn-sm" href="${p.file}" download="${p.filename}">DOWNLOAD</a>
-        </div>
-    `).join('');
+        </div>`
+        : `<div class="dl-row">
+            <span>${p.name}</span>
+            <span class="dl-pending">NOT YET AVAILABLE</span>
+        </div>`
+    ).join('');
 
     checkoutForm.style.display = 'none';
     checkoutSuccess.style.display = '';
