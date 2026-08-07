@@ -3,10 +3,10 @@ name: Session reminder
 on:
   schedule:
     # minute hour * * day  (0=Sun, 2=Tue, 4=Thu) — times are UTC
-    - cron: "0 17 * * 2"   # Tuesday ~6pm UK
-    - cron: "0 17 * * 4"   # Thursday ~6pm UK
-    - cron: "0 10 * * 0"   # Sunday ~11am UK
-  workflow_dispatch:        # adds a "Run workflow" test button
+    - cron: "0 17 * * 2"   # Tuesday 6pm UK
+    - cron: "0 17 * * 4"   # Thursday 6pm UK
+    - cron: "0 17 * * 0"   # Sunday 6pm UK
+  workflow_dispatch:
 
 jobs:
   nudge:
@@ -17,5 +17,5 @@ jobs:
           curl -s \
             -H "Title: Mission: Engineer" \
             -H "Tags: rocket" \
-            -d "Session time. 20 minutes on the next unticked item - then tick it." \
+            -d "6pm check-in: have you done your project today? Open the tracker and tick it off - or grab 20 minutes now." \
             ntfy.sh/mechatronics
