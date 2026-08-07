@@ -1,0 +1,21 @@
+name: Session reminder
+
+on:
+  schedule:
+    # minute hour * * day  (0=Sun, 2=Tue, 4=Thu) — times are UTC
+    - cron: "0 17 * * 2"   # Tuesday ~6pm UK
+    - cron: "0 17 * * 4"   # Thursday ~6pm UK
+    - cron: "0 10 * * 0"   # Sunday ~11am UK
+  workflow_dispatch:        # adds a "Run workflow" test button
+
+jobs:
+  nudge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send notification
+        run: |
+          curl -s \
+            -H "Title: Mission: Engineer" \
+            -H "Tags: rocket" \
+            -d "Session time. 20 minutes on the next unticked item - then tick it." \
+            ntfy.sh/mechatronics-q7v2kx9m
