@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fortnight Study Planner</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout concept: a squared exercise book. Times sit in the red margin, tasks sit on ruled lines, subjects are highlighted. */
+:root {
+  --paper: #edf2f8; --grid: #dde6f1; --sheet: #ffffff; --ink: #17233f; --muted: #55637f;
+  --rule: #cdd8e7; --margin: #e2574c; --pen: #2146d0; --pen-ink: #ffffff; --soft: #e3eafc;
+  --warn-bg: #fff3d6; --warn-ink: #6d4a00; --good: #15784a; --mark-l: 72%; --mark-a: .6;
+  --display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", Verdana, sans-serif;
+  --mono: "DM Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0f1527; --grid: #18213a; --sheet: #161f37; --ink: #e9eef9; --muted: #a2afca;
+  --rule: #2b3756; --margin: #ff7b6e; --pen: #9db2ff; --pen-ink: #101830; --soft: #232f52;
+  --warn-bg: #3a2d0c; --warn-ink: #ffdf9a; --good: #6fdca6; --mark-l: 44%; --mark-a: .6; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --paper: #0f1527; --grid: #18213a; --sheet: #161f37; --ink: #e9eef9; --muted: #a2afca;
+  --rule: #2b3756; --margin: #ff7b6e; --pen: #9db2ff; --pen-ink: #101830; --soft: #232f52;
+  --warn-bg: #3a2d0c; --warn-ink: #ffdf9a; --good: #6fdca6; --mark-l: 44%; --mark-a: .6; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background-color: var(--paper); color: var(--ink); font: 16px/1.5 var(--body);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--sheet); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--pen); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--sheet); border-bottom: 2px solid var(--ink); }
+.top-in { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.brand { font: 800 21px/1 var(--display); letter-spacing: -.02em; margin-right: auto; }
+.tabs { display: flex; gap: 4px; }
+.tab { border: 0; background: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; color: var(--muted); }
+.tab[aria-current="page"] { background: var(--ink); color: var(--sheet); }
+main { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 16px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.sheet h2 { font-size: 21px; }
+.note { color: var(--muted); font-size: 14.5px; margin: 0; max-width: 65ch; }
+.weekhead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.weekhead h1 { font-size: clamp(24px, 6vw, 34px); letter-spacing: -.02em; }
+.ab { font: 800 15px/1 var(--display); background: var(--ink); color: var(--sheet); padding: 6px 9px; border-radius: 4px; }
+.nav { width: 40px; height: 40px; border: 1px solid var(--rule); background: var(--sheet); border-radius: 6px; font-size: 19px; }
+.spacer { flex: 1; }
+.btn { border: 1px solid var(--rule); background: var(--sheet); border-radius: 6px; padding: 8px 12px; font-weight: 700; }
+.btn.primary { background: var(--pen); border-color: var(--pen); color: var(--pen-ink); }
+.btn.quiet { font-weight: 400; color: var(--muted); }
+.btn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--sheet); }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.stat b { display: block; font: 800 clamp(20px, 5vw, 27px)/1.1 var(--display); }
+.stat span { color: var(--muted); font-size: 13.5px; }
+.bar { height: 10px; background: var(--soft); border-radius: 2px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--pen); }
+.warn { background: var(--warn-bg); color: var(--warn-ink); padding: 10px 12px; border-radius: 4px; font-size: 14.5px; display: flex; flex-direction: column; gap: 6px; }
+.warn p { margin: 0; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (min-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr) 320px; } }
+.strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.dayb { border: 1px solid var(--rule); background: var(--sheet); border-radius: 4px; padding: 7px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 1px; line-height: 1.1; min-width: 0; }
+.dayb small { color: var(--muted); font-size: 12.5px; }
+.dayb b { font: 800 19px/1.1 var(--display); }
+.dayb em { font: 400 11px/1.2 var(--mono); color: var(--muted); }
+.dayb.today { border-color: var(--margin); border-width: 2px; padding: 6px 1px 5px; }
+.dayb[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--sheet); }
+.dayb[aria-pressed="true"] small, .dayb[aria-pressed="true"] em { color: var(--sheet); }
+.page { --m: 84px; background: linear-gradient(90deg, transparent calc(var(--m) - 2px), var(--margin) calc(var(--m) - 2px), var(--margin) calc(var(--m) - 1px), transparent calc(var(--m) - 1px)), var(--sheet);
+  border: 1px solid var(--rule); border-radius: 4px; min-width: 0; }
+.pagehead { padding: 13px 14px 11px calc(var(--m) + 12px); border-bottom: 1px solid var(--rule); }
+.pagehead h2 { font-size: 21px; }
+.pagehead p { margin: 2px 0 0; color: var(--muted); font-size: 14.5px; }
+.row { display: grid; grid-template-columns: var(--m) minmax(0, 1fr) auto; align-items: start; border-bottom: 1px solid var(--rule); min-height: 58px; }
+.row:last-child { border-bottom: 0; }
+.time { font: 400 13.5px/1.3 var(--mono); padding: 12px 8px 8px; text-align: right; color: var(--muted); }
+.time b { display: block; color: var(--ink); font-weight: 500; font-size: 15px; }
+.task { padding: 10px 8px 10px 12px; min-width: 0; }
+.task h3 { font: 700 16.5px/1.3 var(--body); overflow-wrap: anywhere; }
+.task p { margin: 3px 0 0; color: var(--muted); font-size: 14.5px; line-height: 1.4; }
+.kind { display: block; font: 500 11.5px/1.3 var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.sub { background: linear-gradient(transparent 14%, hsl(var(--h, 215) 88% var(--mark-l) / var(--mark-a)) 14% 90%, transparent 90%); padding: 0 .28em; margin-left: -.28em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.check { width: 44px; height: 54px; display: grid; place-items: center; }
+.check input { width: 25px; height: 25px; accent-color: var(--pen); margin: 0; cursor: pointer; }
+.row.done h3 { text-decoration: line-through; text-decoration-thickness: 2px; }
+.row.done .task p, .row.done .kind { opacity: .65; }
+.row.missed .kind { color: var(--margin); }
+.row.fixed { min-height: 44px; }
+.row.fixed .task { padding-top: 11px; color: var(--muted); }
+.free { padding: 12px 14px 13px calc(var(--m) + 12px); color: var(--good); font-weight: 700; }
+.list { display: flex; flex-direction: column; }
+.li { display: flex; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--rule); min-width: 0; }
+.li:first-child { border-top: 0; }
+.li > div { flex: 1; min-width: 0; }
+.li b { display: block; overflow-wrap: anywhere; }
+.li small { color: var(--muted); font-size: 13.5px; display: block; }
+.tag { font: 500 12px/1.2 var(--mono); padding: 4px 6px; border-radius: 3px; background: var(--soft); white-space: nowrap; }
+.tag.good { color: var(--good); }
+.tag.bad { background: var(--warn-bg); color: var(--warn-ink); }
+.form { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; align-items: end; }
+label.f { display: flex; flex-direction: column; gap: 3px; font-size: 13.5px; color: var(--muted); min-width: 0; }
+label.f.wide { grid-column: 1 / -1; }
+input[type=text], input[type=date], input[type=time], input[type=number], select { width: 100%; min-width: 0; padding: 9px; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); font-size: 16px; }
+.edit { border-top: 1px solid var(--rule); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.edit:first-of-type { border-top: 0; padding-top: 0; }
+.edit-foot { display: flex; justify-content: flex-end; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--rule); background: var(--sheet); border-radius: 4px; padding: 6px 9px; font-size: 14.5px; }
+.chip[aria-pressed="true"] { background: hsl(var(--h, 215) 88% var(--mark-l) / var(--mark-a)); border-color: var(--ink); font-weight: 700; }
+.ttday { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--rule); }
+.ttday h3 { font: 700 15px/1.2 var(--body); }
+.seg { display: flex; gap: 4px; flex-wrap: wrap; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; align-items: start; }
+.two > * { min-width: 0; }
+.wizard { max-width: 640px; width: 100%; margin: 0 auto; gap: 14px; }
+.wizard h1 { font-size: clamp(26px, 7vw, 36px); letter-spacing: -.02em; }
+.wizard .kind { margin: 0; }
+.wiz-foot { display: flex; justify-content: space-between; gap: 10px; padding-top: 6px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.subrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+.status { font-size: 13px; color: var(--muted); text-align: center; margin: 0; }
+.wins { display: flex; flex-direction: column; gap: 8px; }
+.win { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+@media (max-width: 420px) { .page { --m: 72px; } .time { font-size: 12.5px; padding-inline: 4px 6px; } .time b { font-size: 14px; } .stats { gap: 10px; } .dayb small { font-size: 12px; } .two { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: no-preference) { .bar i { transition: width .25s ease; } }
+</style>
+<style>body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <div class="brand">Fortnight</div>
+  <nav class="tabs" aria-label="Main" id="tabs"></nav>
+</div></header>
+<main id="app"></main>
+
+<script>
+/*ENGINE-START*/
+const DN = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const D = {
+  p: s => { const [y,m,d] = s.split('-').map(Number); return new Date(Date.UTC(y, m-1, d)); },
+  f: d => d.toISOString().slice(0,10),
+  add: (s,n) => D.f(new Date(D.p(s).getTime() + n*864e5)),
+  dow: s => (D.p(s).getUTCDay() + 6) % 7,
+  mon: s => D.add(s, -D.dow(s)),
+  week: m => [0,1,2,3,4,5,6].map(i => D.add(m,i)),
+  diffDays: (a,b) => Math.round((D.p(b) - D.p(a)) / 864e5),
+  label: s => { const d = D.p(s); return d.getUTCDate() + ' ' + MN[d.getUTCMonth()]; }
+};
+const toM = t => { const [h,m] = String(t).split(':').map(Number); return h*60 + (m||0); };
+const clock = m => { const h = Math.floor(m/60), mm = m%60, h12 = ((h+11)%12)+1; return h12 + ':' + String(mm).padStart(2,'0') + (h<12 ? 'am' : 'pm'); };
+const dur = m => { const h = Math.floor(m/60), r = Math.round(m%60); return h ? (r ? h+'h '+r : h+'h') : r+' min'; };
+const ceil5 = m => Math.ceil(m/5)*5;
+const hash = s => { let h = 7; for (const c of s) h = (h*31 + c.charCodeAt(0)) >>> 0; return h; };
+
+function defaultState() {
+  return {
+    v: 2, updatedAt: 0, onboarded: false, name: '', litText: '',
+    subjects: [],
+    timetable: { A: [[],[],[],[],[]], B: [[],[],[],[],[]] },
+    anchor: { monday: '2026-11-02', week: 'A' },
+    day: { finish: '15:00', home: '16:00', start: '16:30', end: '18:15' },
+    weekend: { sat: [{s:'10:00',e:'12:00'}], sun: [{s:'14:00',e:'15:30'}] },
+    holidayWin: [{s:'10:00',e:'12:00'}],
+    evening: { on: false, start: '19:00', end: '20:00' },
+    restDays: [4],
+    activities: [],
+    regular: [],
+    oneoff: [],
+    otherHw: 120, sessionLen: 30, breakMin: 10,
+    mockDate: '', targetOverride: 0,
+    holidayWeeks: {}, plans: {}, history: {}
+  };
+}
+
+function weekOf(st, monday) {
+  const n = Math.round(D.diffDays(st.anchor.monday, monday) / 7);
+  const flip = ((n % 2) + 2) % 2 === 1;
+  return flip ? (st.anchor.week === 'A' ? 'B' : 'A') : st.anchor.week;
+}
+
+function phaseFor(st, monday) {
+  const mock = st.mockDate;
+  if (mock && monday >= mock) return { name: 'After your exams', target: 300, stage: 0 };
+  const weeks = mock ? D.diffDays(monday, mock) / 7 : 99;
+  if (st.holidayWeeks[monday]) return weeks <= 11 ? { name: 'Exam-season holidays', target: 750, stage: 2 } : { name: 'School holidays', target: 450, stage: 1 };
+  if (weeks <= 4) return { name: 'Final four weeks', target: 660, stage: 3 };
+  if (weeks <= 11) return { name: 'Stepping up', target: 510, stage: 2 };
+  if (weeks < 20) return { name: 'Building up', target: 390, stage: 1 };
+  return { name: 'Steady start', target: 300, stage: 0 };
+}
+const targetFor = (st, monday) => st.targetOverride > 0 ? st.targetOverride : phaseFor(st, monday).target;
+
+function tipFor(name, monday, stage, litText) {
+  const n = Math.round(D.diffDays('2026-11-02', monday) / 7), odd = ((n % 2) + 2) % 2 === 1;
+  const end = stage >= 2 ? ' Do it timed, then mark it.' : '';
+  const s = name.toLowerCase();
+  if (s.includes('maths')) return (odd ? 'Calculator questions: class topic, then an older one.' : 'Non-calculator questions: class topic, then an older one.') + end;
+  if (s.includes('literature')) return (litText ? litText + ': learn' : 'Learn') + ' 3 short quotations, then plan one paragraph.' + end;
+  if (s.includes('language')) return (odd ? 'Paper 2: practise one reading question, then plan a piece of writing.' : 'Paper 1: practise one reading question, then plan a piece of writing.') + end;
+  if (s.includes('german')) return ['Writing: answer one question in German.','Speaking: practise a role-play out loud.','Translation: try a few short sentences.','Dictation: listen, write it down, then check.'][((n % 4) + 4) % 4] + end;
+  if (s.includes('computer')) return (odd ? 'Paper 2: algorithms and programming, with some Python.' : 'Paper 1: computer systems. Test yourself on one topic.') + end;
+  if (s.includes('geography')) return 'Class topic, then a case study or a map and graph skill.' + end;
+  if (/biology|chemistry|physics|science/.test(s)) return 'Class topic, then a required practical or maths-style question.' + end;
+  return 'Test yourself on your class topic, then an older one.' + end;
+}
+
+function freeWindows(st, iso, holiday, label) {
+  const dow = D.dow(iso), rest = st.restDays.includes(dow);
+  let raw;
+  if (dow < 5 && !holiday) raw = [{s:st.day.start, e:st.day.end}];
+  else if (dow < 5) raw = st.holidayWin;
+  else raw = dow === 5 ? st.weekend.sat : st.weekend.sun;
+  let w = raw.map(x => ({ s: toM(x.s), e: toM(x.e), tier: rest ? 2 : 0 })).filter(x => x.e > x.s);
+  if (st.evening.on && !rest) w.push({ s: toM(st.evening.start), e: toM(st.evening.end), tier: 1 });
+  for (const a of activitiesOn(st, dow, label)) {
+    const as = toM(a.start), ae = toM(a.end) + 15, next = [];
+    for (const x of w) {
+      if (ae <= x.s || as >= x.e) { next.push(x); continue; }
+      if (as > x.s) next.push({ ...x, e: as });
+      if (ae < x.e) next.push({ ...x, s: ae });
+    }
+    w = next;
+  }
+  return w.sort((a,b) => a.tier - b.tier || a.s - b.s);
+}
+const activitiesOn = (st, dow, label) => st.activities.filter(a => a.days.includes(dow) && (a.week === 'both' || a.week === label) && toM(a.end) > toM(a.start));
+
+function findGap(win, occ, mins, maxTier, brk, floor) {
+  for (const w of win) {
+    if (w.tier > maxTier) continue;
+    let c = ceil5(Math.max(w.s, floor));
+    const os = occ.filter(o => o.e > w.s && o.s < w.e).sort((a,b) => a.s - b.s);
+    for (const o of os) {
+      /* A break is needed only when two tasks together run past 50 minutes. */
+      const gap = (o.e - o.s) + mins > 50 ? brk : 0;
+      if (o.s >= c + mins + gap) return c;
+      if (o.e + gap > c) c = ceil5(o.e + gap);
+    }
+    if (c + mins <= w.e) return c;
+  }
+  return null;
+}
+function freeMins(win, occ, maxTier, floor) {
+  let t = 0;
+  for (const w of win) {
+    if (w.tier > maxTier) continue;
+    const s = Math.max(w.s, floor);
+    if (w.e <= s) continue;
+    let f = w.e - s;
+    for (const o of occ) f -= Math.max(0, Math.min(o.e, w.e) - Math.max(o.s, s));
+    t += Math.max(0, f);
+  }
+  return t;
+}
+
+function doneMins(st, key, skipMonday, keep) {
+  let t = 0;
+  for (const [m,p] of Object.entries(st.plans)) if (m !== skipMonday) for (const b of p.blocks) if (b.key === key && b.done) t += b.e - b.s;
+  for (const b of keep) if (b.key === key && b.done) t += b.e - b.s;
+  return t;
+}
+
+function homeworkFor(st, monday, today) {
+  const label = weekOf(st, monday), week = D.week(monday), out = [];
+  if (!st.holidayWeeks[monday]) for (const r of st.regular) {
+    if (r.every !== 'week' && r.every !== label) continue;
+    const due = r.dueDay === 0 ? D.add(monday, 7) : week[r.dueDay];
+    out.push({ key: r.id + '@' + monday, title: r.title, subject: r.subject, due, mins: r.mins, sessions: Math.max(1, r.sessions || 1), regular: true, marked: !!(st.markedDone || {})[r.id + '@' + monday] });
+  }
+  for (const o of st.oneoff) {
+    if (o.done || o.due > D.add(week[6], 7)) continue;
+    if (o.due < monday && today > week[6]) continue;
+    out.push({ key: o.id, title: o.title, subject: o.subject, due: o.due, mins: o.mins, sessions: 1, regular: false });
+  }
+  return out;
+}
+
+function buildPlan(st, monday, today, nowMin) {
+  const week = D.week(monday), sun = week[6], prev = st.plans[monday], label = weekOf(st, monday), holiday = !!st.holidayWeeks[monday];
+  if (today > sun) return prev || { blocks: [], warnings: [], items: [], target: targetFor(st, monday), builtOn: today };
+  const keep = prev ? prev.blocks.filter(b => b.iso < today || b.done) : [];
+  const open = week.filter(d => d >= today);
+  const W = {}, O = {}, floor = d => d === today ? nowMin : 0;
+  for (const d of week) { W[d] = freeWindows(st, d, holiday, label); O[d] = keep.filter(b => b.iso === d).map(b => ({ s: b.s, e: b.e })); }
+  const blocks = [...keep], warnings = [], brk = st.breakMin;
+  let uid = 0;
+  const put = (d, s, mins, extra) => { O[d].push({ s, e: s + mins }); blocks.push({ id: d.replace(/-/g,'') + '-' + s + '-' + (++uid), iso: d, s, e: s + mins, done: false, ...extra }); };
+
+  const items = homeworkFor(st, monday, today).map(h => {
+    const remaining = h.marked ? 0 : Math.max(0, h.mins - doneMins(st, h.key, monday, keep));
+    const last = h.due <= today ? (h.due === today ? today : (today < sun ? D.add(today, 1) : today)) : D.add(h.due, -1);
+    return { ...h, remaining, last: last > sun ? sun : last, planned: [], overdue: h.due < today, unplaced: 0 };
+  }).sort((a,b) => (a.last < b.last ? -1 : a.last > b.last ? 1 : b.mins - a.mins));
+
+  const placeHw = (it, mins, title) => {
+    for (let tier = 0; tier <= 2; tier++) {
+      let best = null;
+      open.forEach((d, i) => {
+        if (d > it.last) return;
+        const same = blocks.some(b => b.iso === d && b.key === it.key);
+        if (it.sessions > 1 && same) return;
+        const s = findGap(W[d], O[d], mins, tier, brk, floor(d));
+        if (s === null) return;
+        const score = freeMins(W[d], O[d], tier, floor(d)) - i*8 - (same ? 30 : 0);
+        if (!best || score > best.score) best = { d, s, score };
+      });
+      if (best) {
+        put(best.d, best.s, mins, { type: 'hw', key: it.key, subject: it.subject, title: title || it.title, tip: it.regular ? '' : 'Due ' + DN[D.dow(it.due)] + ' ' + D.label(it.due) });
+        it.planned.push(best.d);
+        return true;
+      }
+    }
+    return false;
+  };
+  const placeChunk = (it, mins) => {
+    if (placeHw(it, mins)) return 0;
+    if (mins >= 30) { const a = ceil5(mins/2), b = mins - a; return placeChunk(it, a) + placeChunk(it, b); }
+    return mins;
+  };
+  for (const it of items) {
+    if (it.remaining <= 0) continue;
+    const size = it.sessions > 1 ? Math.ceil(it.mins / it.sessions / 5) * 5 : 45;
+    let left = it.remaining;
+    while (left > 0) { const c = Math.min(left, size); it.unplaced += placeChunk(it, c); left -= c; }
+    if (it.unplaced) warnings.push(`${it.title}: ${dur(it.unplaced)} won't fit before it's due. Free up some time, or turn on after-dinner time in Setup.`);
+    if (it.overdue) warnings.push(`${it.title} was due ${D.label(it.due)}. It's in the plan as soon as possible.`);
+  }
+
+  if (!holiday) {
+    const setThisWeek = st.oneoff.filter(o => o.due >= monday && o.due <= sun).reduce((t,o) => t + o.mins, 0);
+    const otherKey = 'other@' + monday;
+    let left = Math.max(0, st.otherHw - setThisWeek - doneMins(st, otherKey, monday, keep));
+    const other = { key: otherKey, title: 'Homework slot', sessions: 1, last: D.add(sun, -1), regular: true, subject: '', planned: [] };
+    while (left > 0) {
+      const c = Math.min(left, 45);
+      const placed = placeHw(other, c, 'Homework slot') || (c >= 25 && placeHw(other, 20, 'Homework slot'));
+      if (!placed) break;
+      left -= blocks[blocks.length - 1].e - blocks[blocks.length - 1].s;
+    }
+  }
+
+  const target = targetFor(st, monday), phase = phaseFor(st, monday), len = st.sessionLen;
+  const subs = st.subjects.filter(s => s.weight > 0);
+  const wsum = subs.reduce((t,s) => t + s.weight, 0) || 1;
+  const total = Math.max(0, Math.round(target / len));
+  const quota = subs.map(s => ({ s, q: total * s.weight / wsum, tie: hash(s.id + monday) }));
+  quota.forEach(x => { x.n = Math.floor(x.q); x.frac = x.q - x.n; });
+  let spare = total - quota.reduce((t,x) => t + x.n, 0);
+  quota.slice().sort((a,b) => b.frac - a.frac || a.tie - b.tie).forEach(x => { if (spare > 0) { x.n++; spare--; } });
+  const doneRev = sub => keep.filter(b => b.type === 'rev' && b.done && b.subject === sub).length;
+  const queue = [];
+  const need = quota.map(x => ({ x, left: Math.max(0, x.n - doneRev(x.s.id)) }));
+  for (let more = true; more;) {
+    more = false;
+    for (const nd of need.slice().sort((a,b) => b.x.s.weight - a.x.s.weight || a.x.tie - b.x.tie)) if (nd.left > 0) { queue.push(nd.x.s); nd.left--; more = true; }
+  }
+  const lessons = d => { const dow = D.dow(d); return dow < 5 && !holiday ? ((st.timetable[label] || [])[dow] || []) : []; };
+  const tiers = st.evening.on ? [0,1] : [0];
+  let dropped = 0;
+  for (const sub of queue) {
+    let best = null;
+    for (const tier of tiers) {
+      for (const mins of [len, 20]) {
+        if (mins > len) continue;
+        open.forEach(d => {
+          const same = blocks.filter(b => b.iso === d && b.type === 'rev' && b.subject === sub.id).length;
+          if (same >= 2) return;
+          const s = findGap(W[d], O[d], mins, tier, brk, floor(d));
+          if (s === null) return;
+          const score = freeMins(W[d], O[d], tier, floor(d)) + (lessons(d).includes(sub.id) ? 120 : 0) - same*90;
+          if (!best || score > best.score) best = { d, s, mins, score };
+        });
+        if (best) break;
+      }
+      if (best) break;
+    }
+    if (!best) { dropped++; continue; }
+    put(best.d, best.s, best.mins, { type: 'rev', key: 'rev:' + sub.id, subject: sub.id, title: sub.name + ' revision', tip: tipFor(sub.name, monday, phase.stage, st.litText) });
+  }
+  const planned = blocks.filter(b => b.type === 'rev' && (b.done || b.iso >= today)).reduce((t,b) => t + b.e - b.s, 0);
+  if (planned < target - len) warnings.push(`There's room for ${dur(planned)} of your ${dur(target)} revision this week. Add time in Setup, such as after dinner, to fit the rest.`);
+  blocks.sort((a,b) => a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : a.s - b.s);
+  return { blocks, warnings, items, target, builtOn: today, phase: phase.name };
+}
+/*ENGINE-END*/
+
+const LS = 'fortnight-planner-v1';
+const nowDate = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
+const nowMins = () => { const d = new Date(); return d.getHours()*60 + d.getMinutes(); };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uidNew = () => 'x' + Date.now().toString(36) + Math.floor(Math.random()*1e4).toString(36);
+
+/* Plans saved before guided setup existed count as already set up. */
+function hydrate(saved) {
+  const s = { ...defaultState(), ...saved };
+  if (saved.onboarded === undefined) {
+    s.onboarded = (saved.updatedAt || 0) > 0;
+    if (s.onboarded && !s.litText) s.litText = 'An Inspector Calls';
+  }
+  return s;
+}
+let state = defaultState();
+try { const raw = localStorage.getItem(LS); if (raw) state = hydrate(JSON.parse(raw)); } catch (e) {}
+const ui = { tab: 'plan', step: 0, monday: D.mon(nowDate()), day: nowDate(), tt: weekOf(state, D.mon(nowDate())), confirmReset: false, sync: 'device', synced: false };
+let docRef = null, writing = false, again = false, saveTimer = null;
+
+function ensurePlan(monday, force) {
+  const today = nowDate(), p = state.plans[monday];
+  if (!p || force || (p.builtOn !== today && today <= D.add(monday, 6))) { state.plans[monday] = buildPlan(state, monday, today, nowMins()); return true; }
+  return false;
+}
+function prune() {
+  const cut = D.add(D.mon(nowDate()), -7*16);
+  for (const m of Object.keys(state.plans)) if (m < cut) { const s = score(state.plans[m]); state.history[m] = s; delete state.plans[m]; }
+  state.oneoff = state.oneoff.filter(o => !(o.done && o.due < cut));
+}
+function score(p) {
+  const today = nowDate();
+  const live = p.blocks.filter(b => b.done || b.iso >= today);
+  return { done: p.blocks.filter(b => b.done).length, total: live.length, missed: p.blocks.length - live.length };
+}
+function persist() {
+  state.updatedAt = Date.now();
+  try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
+  if (!docRef || !ui.synced) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(writeDb, 700);
+}
+async function writeDb() {
+  if (writing) { again = true; return; }
+  writing = true;
+  try {
+    await docRef.set(JSON.parse(JSON.stringify(state)));
+    if (ui.sync !== 'account') { ui.sync = 'account'; drawStatus(); }
+  } catch (e) {
+    if (e && e.code === 'unavailable') setTimeout(writeDb, 1500 + Math.random()*1000);
+    else { ui.sync = 'device'; drawStatus(); }
+  }
+  writing = false;
+  if (again) { again = false; writeDb(); }
+}
+function commit() {
+  ensurePlan(D.mon(nowDate()), true);
+  if (ui.monday !== D.mon(nowDate())) ensurePlan(ui.monday, true);
+  prune(); persist(); render();
+}
+function drawStatus() {
+  const el = document.getElementById('status');
+  if (el) el.textContent = ui.sync === 'account' ? 'Saved to your account, so it follows you between devices.' : 'Saved on this device.';
+}
+
+/* ---------- views ---------- */
+const subj = id => state.subjects.find(s => s.id === id);
+const hue = id => subj(id)?.hue ?? 215;
+const subName = id => subj(id)?.name || 'Other';
+const options = (val, list) => list.map(([v,t]) => `<option value="${esc(v)}"${String(v) === String(val) ? ' selected' : ''}>${esc(t)}</option>`).join('');
+const subjOpts = val => options(val, [['','No subject'], ...state.subjects.map(s => [s.id, s.name])]);
+
+const COMMON = ['Maths','English Language','English Literature','Biology','Chemistry','Physics','Combined Science','Geography','History','German','French','Spanish','Computer Science','Business','Religious Studies','Art','Design and Technology','Music','Drama','PE'];
+const PRESETS = [['Sparx Maths','maths',45,1],['Sparx Science','science|biology',40,1],['Sparx Reader','english',30,1],['Memrise','german|french|spanish',20,2],['Seneca','',30,1],['Hegarty Maths','maths',45,1]];
+
+const STEPS = [
+  { title: 'Let’s build your study plan', hint: 'Eight quick questions. You can change every answer later.', body: () => `<label class="f">What should we call you?<input type="text" id="w-name" data-bind="name" value="${esc(state.name)}" placeholder="Your first name"></label>` },
+  { title: 'Which subjects do you study?', hint: 'Tap all that apply.', ok: () => state.subjects.length > 0, need: 'Pick at least one subject to carry on.', body: () => `<div class="chips">${[...COMMON, ...state.subjects.map(s => s.name).filter(n => !COMMON.includes(n))].map(n => { const s = state.subjects.find(x => x.name === n); return `<button class="chip" id="p-${esc(n.replace(/\W/g,''))}" style="--h:${s ? s.hue : 215}" data-act="subpick" data-v="${esc(n)}" aria-pressed="${!!s}">${esc(n)}</button>`; }).join('')}</div><form class="form" id="addsub"><label class="f">Another subject<input type="text" id="w-sub" placeholder="Subject name"></label><button class="btn" type="submit">Add subject</button></form>` },
+  { title: 'What’s on your timetable?', hint: 'Tap your subjects for each day. If your school doesn’t use two weeks, fill in Week A and copy it. You can skip this for now.', body: () => `${ttEditor()}<div><button class="btn" id="tt-copy" data-act="ttcopy">Copy Week A to Week B</button></div>` },
+  { title: 'What does a school day look like?', hint: 'Your plan only uses the time between starting work and stopping for dinner.', body: () => `<div class="form">
+    <label class="f">School finishes<input type="time" id="wd-f" data-bind="day.finish" value="${state.day.finish}"></label>
+    <label class="f">I get home<input type="time" id="wd-h" data-bind="day.home" value="${state.day.home}"></label>
+    <label class="f">I start work<input type="time" id="wd-s" data-bind="day.start" value="${state.day.start}"></label>
+    <label class="f">I stop for dinner<input type="time" id="wd-e" data-bind="day.end" value="${state.day.end}"></label></div>` },
+  { title: 'Any clubs or activities?', hint: 'Add sport, music, the gym or a job. Your plan will work around them.', body: clubsEditor },
+  { title: 'When can you work at weekends?', hint: 'Choose a rest day too. It stays free unless a deadline needs it.', body: () => `<p class="note">Saturday</p>${winRows('weekend.sat', state.weekend.sat, true)}<p class="note">Sunday</p>${winRows('weekend.sun', state.weekend.sun, true)}<p class="note">Rest days</p>${restChips()}` },
+  { title: 'What homework do you get every week?', hint: 'Tap anything regular, then set when it’s due and how long it takes.', body: () => `<div class="chips">${PRESETS.map((p,i) => `<button class="chip" id="pre-${i}" data-act="preset" data-v="${i}" aria-pressed="${state.regular.some(r => r.title === p[0])}">${p[0]}</button>`).join('')}</div>${regularEditor()}<label class="f">Other homework to leave time for each week (minutes)<input type="number" id="w-other" data-bind="otherHw" data-num min="0" step="15" value="${state.otherHw}"></label>` },
+  { title: 'When are your exams?', hint: 'Your weekly revision builds up as this date gets closer.', body: () => `<div class="form">
+    <label class="f">First exam or mock<input type="date" id="w-mock" data-bind="mockDate" value="${esc(state.mockDate)}"></label>
+    <label class="f">Revision session length<select id="w-len" data-bind="sessionLen" data-num>${options(state.sessionLen, [[20,'20 minutes'],[30,'30 minutes'],[45,'45 minutes']])}</select></label>
+    ${state.subjects.some(s => /literature/i.test(s.name)) ? `<label class="f wide">English Literature text you’re studying now<input type="text" id="w-lit" data-bind="litText" value="${esc(state.litText)}" placeholder="Optional"></label>` : ''}</div>
+    <div><p class="note">Which subjects need the most work? They’ll get about twice the time.</p><div class="chips" style="margin-top:6px">${state.subjects.map((s,i) => `<button class="chip" id="wf-${s.id}" style="--h:${s.hue}" data-act="focus" data-v="${i}" aria-pressed="${s.weight > 1}">${esc(s.name)}</button>`).join('')}</div></div>` }
+];
+
+function viewWizard() {
+  const s = STEPS[ui.step], last = ui.step === STEPS.length - 1, blocked = s.ok && !s.ok();
+  return `<section class="sheet wizard">
+    <p class="kind">Question ${ui.step + 1} of ${STEPS.length}</p>
+    <div class="bar" aria-hidden="true"><i style="width:${(ui.step + 1) / STEPS.length * 100}%"></i></div>
+    <h1>${s.title}</h1><p class="note">${esc(s.hint)}</p>
+    ${s.body()}
+    ${blocked ? `<p class="note">${esc(s.need)}</p>` : ''}
+    <div class="wiz-foot">
+      ${ui.step ? `<button class="btn" id="w-back" data-act="wback">Back</button>` : '<span></span>'}
+      <button class="btn primary" id="w-next" data-act="wnext"${blocked ? ' disabled' : ''}>${last ? 'Build my plan' : 'Next'}</button>
+    </div>
+  </section>`;
+}
+
+function render() {
+  const wiz = !state.onboarded;
+  document.getElementById('tabs').innerHTML = wiz ? '' : [['plan','Plan'],['homework','Homework'],['setup','Setup']]
+    .map(([k,t]) => `<button class="tab" data-act="tab" data-v="${k}"${ui.tab === k ? ' aria-current="page"' : ''}>${t}</button>`).join('');
+  const focus = document.activeElement?.id;
+  document.getElementById('app').innerHTML = wiz ? viewWizard() : ui.tab === 'plan' ? viewPlan() : ui.tab === 'homework' ? viewHomework() : viewSetup();
+  if (focus) document.getElementById(focus)?.focus({ preventScroll: true });
+  drawStatus();
+}
+
+function viewPlan() {
+  ensurePlan(ui.monday);
+  const m = ui.monday, week = D.week(m), p = state.plans[m], label = weekOf(state, m), today = nowDate();
+  const sc = score(p), rev = p.blocks.filter(b => b.type === 'rev' && (b.done || b.iso >= today)).reduce((t,b) => t + b.e - b.s, 0);
+  const hw = p.blocks.filter(b => b.type === 'hw' && (b.done || b.iso >= today)).reduce((t,b) => t + b.e - b.s, 0);
+  if (!week.includes(ui.day)) ui.day = week.includes(today) ? today : m;
+  const noTT = !state.timetable.A.flat().length && !state.timetable.B.flat().length;
+  const pct = sc.total ? Math.round(sc.done / sc.total * 100) : 0;
+  const strip = week.map((d,i) => {
+    const mins = p.blocks.filter(b => b.iso === d).reduce((t,b) => t + b.e - b.s, 0);
+    return `<button class="dayb${d === today ? ' today' : ''}" data-act="day" data-v="${d}" aria-pressed="${d === ui.day}" aria-label="${DN[i]} ${D.label(d)}"><small>${DN[i].slice(0,3)}</small><b>${D.p(d).getUTCDate()}</b><em>${mins ? dur(mins).replace(' min','m') : 'free'}</em></button>`;
+  }).join('');
+  return `
+  <section class="sheet">
+    <div class="weekhead">
+      <button class="nav" id="prev" data-act="week" data-v="-7" aria-label="Previous week">‹</button>
+      <span class="ab">Week ${label}</span>
+      <h1>${state.name ? esc(state.name) + '’s week: ' : ''}${D.label(week[0])} to ${D.label(week[6])}</h1>
+      <span class="spacer"></span>
+      <button class="btn${state.holidayWeeks[m] ? '' : ' quiet'}" id="hol" data-act="holiday" aria-pressed="${!!state.holidayWeeks[m]}">Holiday week</button>
+      <button class="nav" id="next" data-act="week" data-v="7" aria-label="Next week">›</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>${sc.done} / ${sc.total}</b><span>tasks done</span></div>
+      <div class="stat"><b>${dur(rev)}</b><span>revision (aim ${dur(p.target)})</span></div>
+      <div class="stat"><b>${dur(hw)}</b><span>homework</span></div>
+    </div>
+    <div class="bar" role="img" aria-label="${pct}% of this week's tasks done"><i style="width:${pct}%"></i></div>
+    ${p.warnings.length ? `<div class="warn">${p.warnings.map(w => `<p>${esc(w)}</p>`).join('')}</div>` : ''}
+    ${noTT ? `<div class="warn"><p>Add your Week A and Week B lessons, and revision will land on days you have that subject.</p><div><button class="btn" data-act="tab" data-v="setup">Add my timetable</button></div></div>` : ''}
+  </section>
+  <div class="layout">
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="strip">${strip}</div>
+      ${viewDay(ui.day, p, label)}
+    </div>
+    <aside class="sheet"><h2>Due next</h2>${dueList(p)}<p class="note">${esc(p.phase || '')}: aim for ${dur(p.target)} of revision this week. Test yourself, then mark it. Rereading doesn't count.</p></aside>
+  </div>`;
+}
+
+function viewDay(d, p, label) {
+  const today = nowDate(), dow = D.dow(d), blocks = p.blocks.filter(b => b.iso === d);
+  const fixed = activitiesOn(state, dow, label).map(a => ({ s: toM(a.start), e: toM(a.end), name: a.name }));
+  const rest = state.restDays.includes(dow), lessons = dow < 5 && !state.holidayWeeks[ui.monday] ? (state.timetable[label][dow] || []) : [];
+  const rows = [...blocks.map(b => ({ s: b.s, b })), ...fixed.map(f => ({ s: f.s, f }))].sort((a,b) => a.s - b.s).map(r => {
+    if (r.f) return `<div class="row fixed"><div class="time"><b>${clock(r.f.s)}</b></div><div class="task">${esc(r.f.name)}</div><span></span></div>`;
+    const b = r.b, missed = !b.done && b.iso < today;
+    const kind = b.type === 'rev' ? 'Revision' : 'Homework';
+    const name = b.type === 'rev' ? subName(b.subject) : b.title;
+    return `<div class="row${b.done ? ' done' : ''}${missed ? ' missed' : ''}" style="--h:${hue(b.subject)}">
+      <div class="time"><b>${clock(b.s)}</b>${dur(b.e - b.s).replace(' min','m')}</div>
+      <div class="task"><span class="kind">${missed ? 'Missed' : kind}</span><h3><span class="sub">${esc(name)}</span></h3>${b.tip ? `<p>${esc(b.tip)}</p>` : ''}</div>
+      <label class="check"><input type="checkbox" id="b-${b.id}" data-tick="${b.id}"${b.done ? ' checked' : ''} aria-label="Mark ${esc(name)} done"></label>
+    </div>`;
+  }).join('');
+  const last = Math.max(0, ...blocks.map(b => b.e));
+  const sub = lessons.length ? 'Lessons: ' + lessons.map(subName).join(', ') : rest ? 'Rest day' : '';
+  return `<section class="page">
+    <div class="pagehead"><h2>${DN[dow]} ${D.label(d)}</h2>${sub ? `<p>${esc(sub)}</p>` : ''}</div>
+    ${rows}
+    <div class="free">${last ? `Finished by ${clock(last)}. The rest of the day is yours.` : 'Nothing planned. Enjoy it.'}</div>
+  </section>`;
+}
+
+function dueList(p) {
+  const items = p.items.slice().sort((a,b) => a.due < b.due ? -1 : 1);
+  if (!items.length) return '<p class="note">Nothing due. Add homework when it’s set.</p>';
+  return `<div class="list">${items.map(it => {
+    const done = it.remaining <= 0 || p.blocks.filter(b => b.key === it.key).every(b => b.done) && p.blocks.some(b => b.key === it.key);
+    const tag = done ? '<span class="tag good">Done</span>' : it.unplaced ? '<span class="tag bad">No room</span>' : it.planned[0] ? `<span class="tag">${DN[D.dow(it.planned[0])].slice(0,3)}</span>` : '';
+    return `<div class="li"><div><b>${esc(it.title)}</b><small>Due ${DN[D.dow(it.due)].slice(0,3)} ${D.label(it.due)}</small></div>${tag}</div>`;
+  }).join('')}</div>`;
+}
+
+function viewHomework() {
+  ensurePlan(ui.monday);
+  const open = state.oneoff.filter(o => !o.done).sort((a,b) => a.due < b.due ? -1 : 1);
+  const done = state.oneoff.filter(o => o.done).slice(-5).reverse();
+  const planFor = key => { for (const m of Object.keys(state.plans).sort()) { const b = state.plans[m].blocks.find(x => x.key === key && !x.done && x.iso >= nowDate()); if (b) return b; } return null; };
+  return `
+  <div class="two">
+    <section class="sheet">
+      <h2>Add homework</h2>
+      <p class="note">Add anything a teacher sets. The planner finds time before it’s due and moves your revision around it.</p>
+      <form class="form" id="addhw">
+        <label class="f wide">What is it?<input type="text" id="h-title" required placeholder="For example, geography questions"></label>
+        <label class="f">Subject<select id="h-sub">${subjOpts('')}</select></label>
+        <label class="f">Due<input type="date" id="h-due" required min="${nowDate()}" value="${D.add(nowDate(), 3)}"></label>
+        <label class="f">Minutes<input type="number" id="h-min" min="5" max="300" step="5" value="30" required></label>
+        <button class="btn primary" type="submit">Add to my plan</button>
+      </form>
+      <h2 style="margin-top:8px">Set by teachers</h2>
+      ${open.length ? `<div class="list">${open.map(o => { const b = planFor(o.id); return `<div class="li"><div><b>${esc(o.title)}</b><small>Due ${DN[D.dow(o.due)].slice(0,3)} ${D.label(o.due)} · ${dur(o.mins)} · ${esc(subName(o.subject))}</small></div>${b ? `<span class="tag">${DN[D.dow(b.iso)].slice(0,3)}</span>` : ''}<button class="btn" id="d-${o.id}" data-act="hwdone" data-v="${o.id}">Done</button><button class="btn quiet" id="r-${o.id}" data-act="hwdel" data-v="${o.id}" aria-label="Remove ${esc(o.title)}">Remove</button></div>`; }).join('')}</div>` : '<p class="note">Nothing yet. Your Sparx and Memrise are already planned in as regular homework.</p>'}
+      ${done.length ? `<p class="note">Finished: ${done.map(o => esc(o.title)).join(', ')}</p>` : ''}
+    </section>
+    <section class="sheet">
+      <h2>Regular homework</h2>
+      <p class="note">This repeats automatically. The minutes are estimates, so change them to match how long each one really takes.</p>
+      ${regularEditor()}
+      <label class="f">Other homework to leave time for each week (minutes)<input type="number" id="otherhw" data-bind="otherHw" data-num min="0" step="15" value="${state.otherHw}"></label>
+      <p class="note">Anything you add on the left comes off this time, so it isn’t counted twice.</p>
+    </section>
+  </div>
+  <p class="status" id="status"></p>`;
+}
+
+function winRows(path, list, canRemove) {
+  return `<div class="wins">${list.map((w,i) => `<div class="win">
+    <label class="f">From<input type="time" id="${path}-s${i}" data-bind="${path}.${i}.s" value="${esc(w.s)}"></label>
+    <label class="f">To<input type="time" id="${path}-e${i}" data-bind="${path}.${i}.e" value="${esc(w.e)}"></label>
+    ${canRemove ? `<button class="btn quiet" id="${path}-x${i}" data-act="windel" data-v="${path}.${i}" aria-label="Remove this time">Remove</button>` : '<span></span>'}
+  </div>`).join('')}<div><button class="btn" id="${path}-add" data-act="winadd" data-v="${path}">Add a time</button></div></div>`;
+}
+
+function regularEditor() {
+  return `${state.regular.map((r,i) => `<div class="edit">
+    <div class="form">
+      <label class="f wide">Name<input type="text" id="reg-t-${r.id}" data-bind="regular.${i}.title" value="${esc(r.title)}"></label>
+      <label class="f">Subject<select id="reg-s-${r.id}" data-bind="regular.${i}.subject">${subjOpts(r.subject)}</select></label>
+      <label class="f">Due<select id="reg-d-${r.id}" data-bind="regular.${i}.dueDay" data-num>${options(r.dueDay, DN.map((d,j) => [j,d]))}</select></label>
+      <label class="f">Minutes a week<input type="number" id="reg-m-${r.id}" data-bind="regular.${i}.mins" data-num min="5" step="5" value="${r.mins}"></label>
+      <label class="f">Split into<select id="reg-n-${r.id}" data-bind="regular.${i}.sessions" data-num>${options(r.sessions, [[1,'1 session'],[2,'2 sessions'],[3,'3 sessions'],[4,'4 sessions']])}</select></label>
+      <label class="f">How often<select id="reg-e-${r.id}" data-bind="regular.${i}.every">${options(r.every, [['week','Every week'],['A','Week A only'],['B','Week B only']])}</select></label>
+    </div>
+    <div class="edit-foot"><button class="btn quiet" id="reg-x-${r.id}" data-act="regdel" data-v="${i}">Remove</button></div>
+  </div>`).join('')}
+  <div><button class="btn" id="regadd" data-act="regadd">Add regular homework</button></div>`;
+}
+
+function ttEditor() {
+  const t = ui.tt;
+  return `<div class="seg"><button class="btn" id="tt-a" data-act="tt" data-v="A" aria-pressed="${t === 'A'}">Week A</button><button class="btn" id="tt-b" data-act="tt" data-v="B" aria-pressed="${t === 'B'}">Week B</button></div>
+  ${[0,1,2,3,4].map(d => `<div class="ttday"><h3>${DN[d]}</h3><div class="chips">${state.subjects.map(s => `<button class="chip" id="tt-${d}-${s.id}" style="--h:${s.hue}" data-act="lesson" data-d="${d}" data-v="${s.id}" aria-pressed="${state.timetable[t][d].includes(s.id)}">${esc(s.name)}</button>`).join('')}</div></div>`).join('')}`;
+}
+
+function clubsEditor() {
+  return `${state.activities.map((a,i) => `<div class="edit">
+    <div class="form">
+      <label class="f wide">Activity<input type="text" id="a-n-${a.id}" data-bind="activities.${i}.name" value="${esc(a.name)}"></label>
+      <label class="f">Starts<input type="time" id="a-s-${a.id}" data-bind="activities.${i}.start" value="${a.start}"></label>
+      <label class="f">Ends<input type="time" id="a-e-${a.id}" data-bind="activities.${i}.end" value="${a.end}"></label>
+      <label class="f">Which weeks<select id="a-w-${a.id}" data-bind="activities.${i}.week">${options(a.week, [['both','Every week'],['A','Week A'],['B','Week B']])}</select></label>
+    </div>
+    <div class="chips">${DN.map((n,j) => `<button class="chip" id="a-d-${a.id}-${j}" data-act="actday" data-i="${i}" data-v="${j}" aria-pressed="${a.days.includes(j)}">${n.slice(0,3)}</button>`).join('')}</div>
+    <div class="edit-foot"><button class="btn quiet" id="a-x-${a.id}" data-act="actdel" data-v="${i}">Remove</button></div>
+  </div>`).join('')}
+  <div><button class="btn" id="a-add" data-act="actadd">Add a club or activity</button></div>`;
+}
+
+const restChips = () => `<div class="chips">${DN.map((n,i) => `<button class="chip" id="rest-${i}" data-act="rest" data-v="${i}" aria-pressed="${state.restDays.includes(i)}">${n.slice(0,3)}</button>`).join('')}</div>`;
+
+function viewSetup() {
+  const current = weekOf(state, D.mon(nowDate()));
+  return `
+  <div class="two">
+    <section class="sheet">
+      <h2>Two-week timetable</h2>
+      <p class="note">Tap the subjects you have each day. You don’t need the lesson order.</p>
+      ${ttEditor()}
+      <div class="ttday"><h3>This week is</h3><div class="seg"><button class="btn" id="cw-a" data-act="current" data-v="A" aria-pressed="${current === 'A'}">Week A</button><button class="btn" id="cw-b" data-act="current" data-v="B" aria-pressed="${current === 'B'}">Week B</button></div></div>
+    </section>
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+      <section class="sheet">
+        <h2>School days</h2>
+        <div class="form">
+          <label class="f">School finishes<input type="time" id="d-f" data-bind="day.finish" value="${state.day.finish}"></label>
+          <label class="f">I get home<input type="time" id="d-h" data-bind="day.home" value="${state.day.home}"></label>
+          <label class="f">I start work<input type="time" id="d-s" data-bind="day.start" value="${state.day.start}"></label>
+          <label class="f">I stop for dinner<input type="time" id="d-e" data-bind="day.end" value="${state.day.end}"></label>
+        </div>
+        <div><p class="note">Rest days</p>${restChips()}</div>
+        <div class="seg"><button class="btn" id="eve" data-act="evening" aria-pressed="${state.evening.on}">Use time after dinner</button></div>
+        ${state.evening.on ? `<div class="form"><label class="f">From<input type="time" id="e-s" data-bind="evening.start" value="${state.evening.start}"></label><label class="f">To<input type="time" id="e-e" data-bind="evening.end" value="${state.evening.end}"></label></div>` : ''}
+        <p class="note">After-dinner time is used only when the rest of the day is full.</p>
+      </section>
+      <section class="sheet">
+        <h2>Weekends and holidays</h2>
+        <p class="note">Saturday</p>${winRows('weekend.sat', state.weekend.sat, true)}
+        <p class="note">Sunday</p>${winRows('weekend.sun', state.weekend.sun, true)}
+        <p class="note">Holiday weekdays</p>${winRows('holidayWin', state.holidayWin, true)}
+      </section>
+      <section class="sheet">
+        <h2>Clubs and activities</h2>
+        ${clubsEditor()}
+      </section>
+      <section class="sheet">
+        <h2>Subjects</h2>
+        <p class="note">Extra focus gives a subject about twice the revision time.</p>
+        ${state.subjects.map((s,i) => `<div class="subrow" style="--h:${s.hue}">
+          <input type="text" id="s-n-${s.id}" data-bind="subjects.${i}.name" value="${esc(s.name)}" aria-label="Subject name">
+          <button class="chip" id="s-w-${s.id}" data-act="focus" data-v="${i}" aria-pressed="${s.weight > 1}">Extra focus</button>
+          <button class="btn quiet" id="s-x-${s.id}" data-act="subdel" data-v="${i}" aria-label="Remove ${esc(s.name)}">Remove</button>
+        </div>`).join('')}
+        <div><button class="btn" id="s-add" data-act="subadd">Add a subject</button></div>
+      </section>
+      <section class="sheet">
+        <h2>Revision</h2>
+        <div class="form">
+          <label class="f">First exam or mock<input type="date" id="mock" data-bind="mockDate" value="${esc(state.mockDate)}"></label>
+          <label class="f">English Literature text<input type="text" id="lit" data-bind="litText" value="${esc(state.litText)}"></label>
+          <label class="f">Session length<select id="len" data-bind="sessionLen" data-num>${options(state.sessionLen, [[20,'20 minutes'],[30,'30 minutes'],[45,'45 minutes']])}</select></label>
+          <label class="f wide">Revision minutes a week (0 = build up automatically)<input type="number" id="tgt" data-bind="targetOverride" data-num min="0" step="30" value="${state.targetOverride}"></label>
+        </div>
+        <p class="note">Your weekly revision builds up as this date gets closer.</p>
+        <div><button class="btn" id="redo" data-act="redo">Go through the questions again</button></div>
+        ${ui.confirmReset ?`<div class="warn"><p>This removes your homework, timetable and ticks. Are you sure?</p><div class="seg"><button class="btn" id="rs-yes" data-act="resetyes">Yes, start again</button><button class="btn" id="rs-no" data-act="resetno">Keep my plan</button></div></div>` : `<div><button class="btn quiet" id="rs" data-act="reset">Start again</button></div>`}
+      </section>
+    </div>
+  </div>
+  <p class="status" id="status"></p>`;
+}
+
+/* ---------- interactions ---------- */
+function setPath(path, val) {
+  const parts = path.split('.'); let o = state;
+  for (let i = 0; i < parts.length - 1; i++) o = o[parts[i]];
+  o[parts[parts.length - 1]] = val;
+}
+const getPath = path => path.split('.').reduce((o,k) => o[k], state);
+
+function addSubject(name) {
+  state.subjects.push({ id: uidNew(), name, hue: (215 + state.subjects.length * 67) % 360, weight: 1 });
+  commit();
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const v = b.dataset.v, act = b.dataset.act;
+  const acts = {
+    tab() { ui.tab = v; ui.confirmReset = false; render(); window.scrollTo(0,0); },
+    day() { ui.day = v; render(); },
+    week() { ui.monday = D.add(ui.monday, +v); ui.day = D.week(ui.monday).includes(nowDate()) ? nowDate() : ui.monday; render(); persist(); },
+    holiday() { if (state.holidayWeeks[ui.monday]) delete state.holidayWeeks[ui.monday]; else state.holidayWeeks[ui.monday] = true; commit(); },
+    hwdone() { const o = state.oneoff.find(x => x.id === v); if (o) o.done = true; commit(); },
+    hwdel() { state.oneoff = state.oneoff.filter(x => x.id !== v); commit(); },
+    regdel() { state.regular.splice(+v, 1); commit(); },
+    regadd() { state.regular.push({ id: uidNew(), title: 'New homework', subject: '', dueDay: 4, mins: 30, sessions: 1, every: 'week' }); commit(); },
+    tt() { ui.tt = v; render(); },
+    lesson() { const list = state.timetable[ui.tt][+b.dataset.d], i = list.indexOf(v); if (i >= 0) list.splice(i,1); else list.push(v); commit(); },
+    current() { state.anchor = { monday: D.mon(nowDate()), week: v }; commit(); },
+    rest() { const i = state.restDays.indexOf(+v); if (i >= 0) state.restDays.splice(i,1); else state.restDays.push(+v); commit(); },
+    evening() { state.evening.on = !state.evening.on; commit(); },
+    winadd() { getPath(v).push({ s: '10:00', e: '11:00' }); commit(); },
+    windel() { const p = v.split('.'), i = +p.pop(); getPath(p.join('.')).splice(i,1); commit(); },
+    actadd() { state.activities.push({ id: uidNew(), name: 'New activity', days: [0], week: 'both', start: '15:00', end: '16:00' }); commit(); },
+    actdel() { state.activities.splice(+v,1); commit(); },
+    actday() { const a = state.activities[+b.dataset.i], i = a.days.indexOf(+v); if (i >= 0) a.days.splice(i,1); else a.days.push(+v); commit(); },
+    focus() { const s = state.subjects[+v]; s.weight = s.weight > 1 ? 1 : 2; commit(); },
+    subadd() { addSubject('New subject'); },
+    subdel(index) {
+      const [s] = state.subjects.splice(index ?? +v, 1);
+      for (const w of ['A','B']) state.timetable[w] = state.timetable[w].map(d => d.filter(x => x !== s.id));
+      state.regular.forEach(r => { if (r.subject === s.id) r.subject = ''; });
+      commit();
+    },
+    wnext() {
+      if (ui.step < STEPS.length - 1) { ui.step++; render(); window.scrollTo(0,0); return; }
+      state.onboarded = true; ui.step = 0; ui.tab = 'plan'; ui.monday = D.mon(nowDate()); ui.day = nowDate(); commit(); window.scrollTo(0,0);
+    },
+    wback() { ui.step = Math.max(0, ui.step - 1); render(); window.scrollTo(0,0); },
+    redo() { state.onboarded = false; ui.step = 0; render(); window.scrollTo(0,0); },
+    subpick() {
+      const i = state.subjects.findIndex(s => s.name === v);
+      if (i >= 0) acts.subdel.call(null, i); else addSubject(v);
+    },
+    ttcopy() { state.timetable.B = state.timetable.A.map(d => d.slice()); ui.tt = 'B'; commit(); },
+    preset() {
+      const [title, match, mins, sessions] = PRESETS[+v], i = state.regular.findIndex(r => r.title === title);
+      if (i >= 0) state.regular.splice(i,1);
+      else {
+        const s = match ? state.subjects.find(x => new RegExp(match, 'i').test(x.name)) : null;
+        state.regular.push({ id: uidNew(), title, subject: s ? s.id : '', dueDay: 4, mins, sessions, every: 'week' });
+      }
+      commit();
+    },
+    reset() { ui.confirmReset = true; render(); },
+    resetno() { ui.confirmReset = false; render(); },
+    resetyes() { const fresh = defaultState(); state = fresh; ui.confirmReset = false; commit(); }
+  };
+  acts[act]?.();
+});
+
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.tick) {
+    for (const p of Object.values(state.plans)) { const b = p.blocks.find(x => x.id === el.dataset.tick); if (b) b.done = el.checked; }
+    persist(); render(); return;
+  }
+  if (el.dataset.bind) {
+    if (el.type === 'time' && !el.value) return;
+    let val = el.value;
+    if ('num' in el.dataset) { val = Number(val); if (!Number.isFinite(val) || val < 0) return; }
+    setPath(el.dataset.bind, val);
+    commit();
+  }
+});
+
+document.addEventListener('submit', e => {
+  if (e.target.id === 'addsub') {
+    e.preventDefault();
+    const name = document.getElementById('w-sub').value.trim();
+    if (name && !state.subjects.some(s => s.name === name)) addSubject(name);
+    return;
+  }
+  if (e.target.id !== 'addhw') return;
+  e.preventDefault();
+  const title = document.getElementById('h-title').value.trim(), due = document.getElementById('h-due').value, mins = Number(document.getElementById('h-min').value);
+  if (!title || !due || !mins) return;
+  state.oneoff.push({ id: uidNew(), title, subject: document.getElementById('h-sub').value, due, mins, done: false });
+  commit();
+});
+
+/* ---------- start ---------- */
+ensurePlan(D.mon(nowDate()));
+render();
+(async () => {
+  try {
+    if (!window.claude?.use) return;
+    const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
+    const id = user ? await user.id() : null;
+    if (!db || !id) { ui.synced = false; return; }
+    docRef = db.doc('data/users/' + id + '/planner');
+    const giveUp = setTimeout(() => { ui.synced = true; }, 10000);
+    docRef.onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites) return;
+      if (!snap.metadata.fromCache) { clearTimeout(giveUp); ui.synced = true; }
+      if (snap.exists) {
+        const data = snap.data();
+        if (ui.sync !== 'account') ui.sync = 'account';
+        if ((data.updatedAt || 0) > (state.updatedAt || 0)) {
+          state = hydrate(JSON.parse(JSON.stringify(data)));
+          try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
+          const busy = document.activeElement && /INPUT|SELECT/.test(document.activeElement.tagName) && document.activeElement.type !== 'checkbox';
+          if (!busy) render();
+        }
+      }
+      drawStatus();
+    }, () => { clearTimeout(giveUp); ui.sync = 'device'; drawStatus(); });
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
